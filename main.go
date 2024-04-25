@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -16,7 +18,7 @@ func main() {
 	client := graphql.NewClient(endpoint, nil)
 	queryCount := 0
 
-	spaces := []string{"curve.eth", "kleros.eth", "comp-vote.eth", "qrobot.eth"}
+	spaces := []string{"curve.eth", "kleros.eth", "comp-vote.eth", "qrobot.eth", "safe.eth"}
 
 	var queryVotes struct {
 		Votes []struct {
@@ -80,5 +82,28 @@ func main() {
 			delete(res, key)
 		}
 	}
+
 	fmt.Println(strconv.Itoa(len(res)) + " users voted more than twice or made proposals")
+
+	keys := make([]string, 0, len(res))
+	for key := range res {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return res[keys[i]] > res[keys[j]]
+	})
+
+	f, err := os.Create("addresses.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer f.Close()
+	for _, k := range keys {
+		_, err = fmt.Fprintln(f, k, res[k])
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+	}
 }
