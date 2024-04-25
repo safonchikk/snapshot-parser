@@ -7,7 +7,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"time"
 
 	"github.com/shurcooL/graphql"
 )
@@ -16,9 +15,8 @@ func main() {
 
 	endpoint := "https://hub.snapshot.org/graphql"
 	client := graphql.NewClient(endpoint, nil)
-	queryCount := 0
 
-	spaces := []string{"curve.eth", "kleros.eth", "comp-vote.eth", "qrobot.eth", "safe.eth"}
+	spaces := []string{"curve.eth", "kleros.eth", "comp-vote.eth", "qrobot.eth", "safe.eth", "ens.eth", "gitcoindao.eth"}
 
 	var queryVotes struct {
 		Votes []struct {
@@ -46,7 +44,6 @@ func main() {
 		variables["space"] = graphql.String(spaces[i])
 		variables["created_lt"] = graphql.NewInt(1800000000)
 		err := client.Query(context.Background(), &queryProposals, variables)
-		queryCount++
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -59,11 +56,6 @@ func main() {
 			err = client.Query(context.Background(), &queryVotes, variables)
 			if err != nil {
 				log.Fatal(err)
-			}
-			queryCount++
-			if queryCount >= 60 {
-				time.Sleep(time.Minute)
-				queryCount = 0
 			}
 			for _, vote := range queryVotes.Votes {
 				res[string(vote.Voter)] += 1
